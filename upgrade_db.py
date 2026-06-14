@@ -1,5 +1,9 @@
 import os
 import psycopg2
+from dotenv import load_dotenv
+
+# Load local environment variables from .env file
+load_dotenv()
 
 def upgrade_database():
     db_name = os.environ.get("DB_NAME", "hotel_eye")

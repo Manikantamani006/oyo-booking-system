@@ -1,6 +1,10 @@
 import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from dotenv import load_dotenv
+
+# Load local environment variables from .env file
+load_dotenv()
 
 def setup_database():
     # Load database settings from environment variables with defaults

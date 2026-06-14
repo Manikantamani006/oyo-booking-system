@@ -1,6 +1,10 @@
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+# Load local environment variables from .env file
+load_dotenv()
 
 def get_db_connection():
     """
