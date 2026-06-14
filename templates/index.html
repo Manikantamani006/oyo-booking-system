@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reception Dashboard - Grand Horizon Hotel</title>
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Local style sheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="description" content="Grand Horizon Hotel receptionist dashboard for managing rooms, guests, and check-ins.">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i data-lucide="hotel" style="color: #ffffff; width: 20px; height: 20px;"></i>
+                </div>
+                <span class="logo-text">Grand Horizon</span>
+            </div>
+            
+            <nav style="flex-grow: 1;">
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="/" id="nav-dashboard">
+                            <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/rooms" id="nav-rooms">
+                            <i data-lucide="bed-double" style="width: 18px; height: 18px;"></i>
+                            <span>Rooms Directory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="calendar" style="width: 18px; height: 18px;"></i>
+                            <span>Bookings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+                            <span>Guests</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-avatar">JD</div>
+                <div class="user-info">
+                    <p class="user-name">Jane Doe</p>
+                    <p class="user-role">Receptionist</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1 id="dashboard-heading">Reception Dashboard</h1>
+                    <p>Welcome back, Jane. Here is the hotel status for today.</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Dynamic database connectivity status badge -->
+                    {% if db_connected %}
+                    <div class="badge-db connected" id="db-status-badge" title="Successfully connected to PostgreSQL hotel_management database">
+                        <span class="pulse-dot"></span>
+                        <span>PostgreSQL Connected</span>
+                    </div>
+                    {% else %}
+                    <div class="badge-db disconnected" id="db-status-badge" title="Failed to connect to local database. Showing demo mock data.">
+                        <span class="pulse-dot"></span>
+                        <span>Database Offline</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Metrics grid -->
+            <section class="stats-grid" id="stats-section">
+                <!-- Total Rooms -->
+                <div class="stat-card total" id="card-total-rooms">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Rooms</span>
+                        <div class="stat-icon-wrapper">
+                            <i data-lucide="door-closed" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+                    <span class="stat-value">{{ stats.total_rooms }}</span>
+                    <div class="stat-footer">
+                        <span>Managed system units</span>
+                    </div>
+                </div>
+
+                <!-- Available Rooms -->
+                <div class="stat-card available" id="card-available-rooms">
+                    <div class="stat-header">
+                        <span class="stat-title">Available</span>
+                        <div class="stat-icon-wrapper">
+                            <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+                    <span class="stat-value">{{ stats.available_rooms }}</span>
+                    <div class="stat-footer">
+                        <span>Ready for check-in</span>
+                    </div>
+                </div>
+
+                <!-- Occupied Rooms -->
+                <div class="stat-card occupied" id="card-occupied-rooms">
+                    <div class="stat-header">
+                        <span class="stat-title">Occupied</span>
+                        <div class="stat-icon-wrapper">
+                            <i data-lucide="key-round" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+                    <span class="stat-value">{{ stats.occupied_rooms }}</span>
+                    <div class="stat-footer">
+                        <span>Active guest stays</span>
+                    </div>
+                </div>
+
+                <!-- Maintenance/Cleaning Rooms -->
+                <div class="stat-card maintenance" id="card-service-rooms">
+                    <div class="stat-header">
+                        <span class="stat-title">In Service</span>
+                        <div class="stat-icon-wrapper">
+                            <i data-lucide="wrench" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+                    <span class="stat-value">{{ stats.maintenance_rooms + stats.cleaning_rooms }}</span>
+                    <div class="stat-footer">
+                        <span>Cleaning & maintenance</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Visual Dashboard widgets -->
+            <section class="dashboard-details">
+                <!-- Occupancy Percentage Card -->
+                <div class="visual-card" id="occupancy-rate-card">
+                    <div class="occupancy-ring">
+                        <svg class="svg-ring" width="160" height="160">
+                            <!-- Gradient definition for the ring fill -->
+                            <defs>
+                                <linearGradient id="indigo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#6366f1" />
+                                    <stop offset="100%" stop-color="#06b6d4" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="ring-bg" cx="80" cy="80" r="70"></circle>
+                            <!-- Circle circumference = 2 * PI * r = 2 * 3.14159 * 70 = 439.82 -->
+                            <!-- stroke-dasharray="440" stroke-dashoffset = 440 * (1 - occupancy_rate / 100) -->
+                            <circle class="ring-fill" cx="80" cy="80" r="70" 
+                                    stroke-dasharray="440" 
+                                    stroke-dashoffset="{{ 440 * (1 - stats.occupancy_rate / 100) }}"></circle>
+                        </svg>
+                        <div class="ring-text">
+                            <span class="ring-percentage">{{ stats.occupancy_rate }}%</span>
+                            <span class="ring-label">Occupancy</span>
+                        </div>
+                    </div>
+                    <h2 class="visual-title">Room Occupancy Rate</h2>
+                    <p class="visual-desc">Calculated in real-time based on active guest allocations relative to total capacity.</p>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="actions-card" id="quick-actions-card">
+                    <h2>Reception Quick Actions</h2>
+                    <div class="action-buttons">
+                        <a href="/rooms" class="btn-action" id="action-view-rooms">
+                            <i data-lucide="list-filter" style="width: 24px; height: 24px;"></i>
+                            <span>View All Rooms</span>
+                        </a>
+                        <a href="/rooms" class="btn-action" id="action-room-maint">
+                            <i data-lucide="shield-alert" style="width: 24px; height: 24px;"></i>
+                            <span>Flag Maintenance</span>
+                        </a>
+                        <a href="#" class="btn-action" style="opacity: 0.6;" onclick="alert('Quick Check-in utility placeholder'); return false;">
+                            <i data-lucide="user-plus" style="width: 24px; height: 24px;"></i>
+                            <span>New Check-in</span>
+                        </a>
+                        <a href="#" class="btn-action" style="opacity: 0.6;" onclick="alert('Quick Check-out utility placeholder'); return false;">
+                            <i data-lucide="user-minus" style="width: 24px; height: 24px;"></i>
+                            <span>Process Checkout</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <p>&copy; 2026 Grand Horizon Hotel System. Powered by Flask, psycopg2 & PostgreSQL.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Lucide icons package script for rendering beautiful icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize Lucide icons on page load
+        lucide.createIcons();
+    </script>
+</body>
+</html>
