@@ -4,7 +4,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 def setup_database():
     # Load database settings from environment variables with defaults
-    db_name = os.environ.get("DB_NAME", "hotel_management")
+    db_name = os.environ.get("DB_NAME", "hotel_eye")
     db_user = os.environ.get("DB_USER", "postgres")
     db_password = os.environ.get("DB_PASSWORD", "postgres")
     db_host = os.environ.get("DB_HOST", "localhost")

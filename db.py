@@ -11,7 +11,7 @@ def get_db_connection():
     User: postgres
     """
     # Load configuration from environment variables with defaults matching user requirements
-    dbname = os.environ.get("DB_NAME", "hotel_management")
+    dbname = os.environ.get("DB_NAME", "hotel_eye")
     user = os.environ.get("DB_USER", "postgres")
     password = os.environ.get("DB_PASSWORD", "postgres")
     host = os.environ.get("DB_HOST", "localhost")

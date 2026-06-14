@@ -2,7 +2,7 @@ import os
 import psycopg2
 
 def upgrade_database():
-    db_name = os.environ.get("DB_NAME", "hotel_management")
+    db_name = os.environ.get("DB_NAME", "hotel_eye")
     db_user = os.environ.get("DB_USER", "postgres")
     db_password = os.environ.get("DB_PASSWORD", "postgres")
     db_host = os.environ.get("DB_HOST", "localhost")
