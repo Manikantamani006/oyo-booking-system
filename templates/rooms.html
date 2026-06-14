@@ -116,6 +116,7 @@
                                 <th>Price / Night</th>
                                 <th>Status</th>
                                 <th>Amenities</th>
+                                <th>Guest / Booking</th>
                                 <th style="text-align: center;">Actions</th>
                             </tr>
                         </thead>
@@ -148,10 +149,10 @@
                                             <i data-lucide="check" style="width: 12px; height: 12px;"></i>
                                             Available
                                         </span>
-                                    {% elif status_lower == 'occupied' %}
-                                        <span class="status-badge occupied">
-                                            <i data-lucide="key" style="width: 12px; height: 12px;"></i>
-                                            Occupied
+                                    {% elif status_lower == 'occupied' or status_lower == 'booked' %}
+                                        <span class="status-badge occupied" style="background-color: rgba(99, 102, 241, 0.1); color: var(--accent-indigo); border-color: rgba(99, 102, 241, 0.25);">
+                                            <i data-lucide="bookmark" style="width: 12px; height: 12px;"></i>
+                                            Booked
                                         </span>
                                     {% elif status_lower == 'cleaning' %}
                                         <span class="status-badge cleaning">
@@ -171,6 +172,21 @@
                                         <span class="amenity-tag">{{ amenity }}</span>
                                         {% endfor %}
                                     </div>
+                                </td>
+                                <td>
+                                    {% if status_lower == 'available' %}
+                                        <a href="/book/{{ room[0] }}" class="btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; box-shadow: none;">
+                                            <i data-lucide="calendar-plus" style="width: 12px; height: 12px;"></i>
+                                            <span>Book Now</span>
+                                        </a>
+                                    {% elif status_lower == 'booked' or status_lower == 'occupied' %}
+                                        <span style="font-weight: 600; color: var(--accent-cyan); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                            <i data-lucide="user-check" style="width: 14px; height: 14px; color: var(--accent-cyan);"></i>
+                                            {{ room.guest_name }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-style: italic;">In Service</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div class="table-actions" style="justify-content: center;">

@@ -69,7 +69,9 @@ def setup_database():
                 status VARCHAR(50) NOT NULL,
                 max_occupancy INTEGER DEFAULT 2,
                 floor INTEGER DEFAULT 1,
-                amenities VARCHAR(255) DEFAULT ''
+                amenities VARCHAR(255) DEFAULT '',
+                guest_name VARCHAR(100),
+                guest_phone VARCHAR(50)
             );
         """)
         print("Table 'rooms' created successfully.")

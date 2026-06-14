@@ -1,12 +1,22 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 from db import get_db_connection
+
+class RoomDict(dict):
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            # Mapping index positions to dictionary keys
+            keys_order = ["id", "room_number", "room_type", "price", "status", "max_occupancy", "floor", "amenities", "guest_name", "guest_phone"]
+            if 0 <= key < len(keys_order):
+                return self.get(keys_order[key])
+        return super().__getitem__(key)
 
 app = Flask(__name__)
 
 # Mock list of dictionary objects representing hotel rooms
 MOCK_ROOMS = [
     {
+        "id": 1,
         "room_number": "101",
         "room_type": "Deluxe Suite",
         "price": 180.0,
@@ -16,6 +26,7 @@ MOCK_ROOMS = [
         "floor": 1
     },
     {
+        "id": 2,
         "room_number": "102",
         "room_type": "Standard Double",
         "price": 120.0,
@@ -25,6 +36,7 @@ MOCK_ROOMS = [
         "floor": 1
     },
     {
+        "id": 3,
         "room_number": "201",
         "room_type": "Executive Suite",
         "price": 285.0,
@@ -34,6 +46,7 @@ MOCK_ROOMS = [
         "floor": 2
     },
     {
+        "id": 4,
         "room_number": "202",
         "room_type": "Standard Single",
         "price": 85.0,
@@ -43,6 +56,7 @@ MOCK_ROOMS = [
         "floor": 2
     },
     {
+        "id": 5,
         "room_number": "301",
         "room_type": "Presidential Penthouse",
         "price": 650.0,
@@ -52,6 +66,7 @@ MOCK_ROOMS = [
         "floor": 3
     },
     {
+        "id": 6,
         "room_number": "302",
         "room_type": "Family Suite",
         "price": 220.0,
@@ -123,7 +138,7 @@ def rooms():
         # Convert rows and parse amenities string if needed
         parsed_rooms = []
         for r in db_rooms:
-            room_dict = dict(r)
+            room_dict = RoomDict(r)
             amenities = room_dict.get("amenities", "")
             if isinstance(amenities, str):
                 room_dict["amenities"] = [a.strip() for a in amenities.split(",") if a.strip()]
@@ -142,7 +157,84 @@ def rooms():
         rooms_list = MOCK_ROOMS
         db_connected = False
 
+    rooms_list = [RoomDict(r) for r in rooms_list]
     return render_template("rooms.html", rooms=rooms_list, db_connected=db_connected)
+
+
+@app.route('/book/<int:room_id>', methods=['GET', 'POST'])
+def book_room(room_id):
+    db_connected = False
+    room = None
+    
+    if request.method == 'POST':
+        guest_name = request.form.get('guest_name')
+        guest_phone = request.form.get('guest_phone')
+        try:
+            price = int(float(request.form.get('price', 0)))
+        except ValueError:
+            price = 0
+            
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE rooms 
+                SET status = 'Booked', 
+                    guest_name = %s, 
+                    guest_phone = %s, 
+                    price = %s 
+                WHERE id = %s;
+            """, (guest_name, guest_phone, price, room_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            db_connected = True
+        except Exception as e:
+            print(f"[DB Error] Failed to book room: {e}")
+            # Mock update fallback
+            for r in MOCK_ROOMS:
+                if r.get("id") == room_id:
+                    r["status"] = "Booked"
+                    r["guest_name"] = guest_name
+                    r["guest_phone"] = guest_phone
+                    r["price"] = float(price)
+                    break
+        return redirect(url_for('rooms'))
+        
+    else: # GET method
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM rooms WHERE id = %s;", (room_id,))
+            room = cur.fetchone()
+            cur.close()
+            conn.close()
+            db_connected = True
+            
+            if room:
+                room = dict(room)
+                # Parse amenities just in case
+                amenities = room.get("amenities", "")
+                if isinstance(amenities, str):
+                    room["amenities"] = [a.strip() for a in amenities.split(",") if a.strip()]
+                else:
+                    room["amenities"] = list(amenities) if amenities else []
+        except Exception as e:
+            print(f"[DB Error] Failed to fetch room details for booking: {e}")
+            db_connected = False
+            
+        # Fallback to mock data if DB failed or room wasn't found in DB
+        if not room:
+            for r in MOCK_ROOMS:
+                if r.get("id") == room_id:
+                    room = r
+                    break
+                    
+        if not room:
+            return "Room not found", 404
+            
+        room = RoomDict(room)
+        return render_template('book.html', room=room, db_connected=db_connected)
 
 
 if __name__ == "__main__":

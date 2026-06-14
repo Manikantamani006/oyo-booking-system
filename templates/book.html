@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Room {{ room.room_number }} - Grand Horizon Hotel</title>
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Local style sheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="description" content="Book room {{ room.room_number }} for guest stay.">
+    <style>
+        /* Extra styles specific to the booking form card */
+        .form-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+            width: 100%;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-indigo);
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 12px var(--accent-indigo-glow);
+        }
+        
+        .room-summary-box {
+            background-color: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .room-summary-details h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .room-summary-details p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .btn-submit-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-submit-group button, .btn-submit-group a {
+            flex: 1;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i data-lucide="hotel" style="color: #ffffff; width: 20px; height: 20px;"></i>
+                </div>
+                <span class="logo-text">Grand Horizon</span>
+            </div>
+            
+            <nav style="flex-grow: 1;">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="/" id="nav-dashboard">
+                            <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="/rooms" id="nav-rooms">
+                            <i data-lucide="bed-double" style="width: 18px; height: 18px;"></i>
+                            <span>Rooms Directory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="calendar" style="width: 18px; height: 18px;"></i>
+                            <span>Bookings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+                            <span>Guests</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" style="opacity: 0.5; cursor: not-allowed;" onclick="return false;">
+                            <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-avatar">JD</div>
+                <div class="user-info">
+                    <p class="user-name">Jane Doe</p>
+                    <p class="user-role">Receptionist</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1 id="book-heading">Process Room Booking</h1>
+                    <p>Allocate room to guest and record checkout details.</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Dynamic database connectivity status badge -->
+                    {% if db_connected %}
+                    <div class="badge-db connected" id="db-status-badge">
+                        <span class="pulse-dot"></span>
+                        <span>PostgreSQL Connected</span>
+                    </div>
+                    {% else %}
+                    <div class="badge-db disconnected" id="db-status-badge">
+                        <span class="pulse-dot"></span>
+                        <span>Database Offline</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Booking Card Form -->
+            <section class="form-card" id="booking-form-card">
+                <div class="room-summary-box">
+                    <div class="room-summary-details">
+                        <h3>Room {{ room.room_number }}</h3>
+                        <p>{{ room.room_type }} &bull; Floor {{ room.floor }}</p>
+                    </div>
+                    <span class="status-badge available">
+                        <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                        {{ room.status }}
+                    </span>
+                </div>
+
+                <form method="POST" id="booking-form">
+                    <!-- Guest Name Input -->
+                    <div class="form-group">
+                        <label for="guest_name" class="form-label">Guest Name</label>
+                        <input type="text" id="guest_name" name="guest_name" class="form-control" placeholder="Enter guest's full name" required autocomplete="off">
+                    </div>
+
+                    <!-- Phone Number Input -->
+                    <div class="form-group">
+                        <label for="guest_phone" class="form-label">Phone Number</label>
+                        <input type="tel" id="guest_phone" name="guest_phone" class="form-control" placeholder="Enter contact phone number" required autocomplete="off">
+                    </div>
+
+                    <!-- Price Input -->
+                    <div class="form-group">
+                        <label for="price" class="form-label">Rate per Night ($)</label>
+                        <input type="number" id="price" name="price" class="form-control" value="{{ room.price|int }}" required autocomplete="off">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="btn-submit-group">
+                        <a href="/rooms" class="btn-primary" style="background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); box-shadow: none;">
+                            <span>Cancel</span>
+                        </a>
+                        <button type="submit" class="btn-primary" id="btn-confirm-booking">
+                            <i data-lucide="check-square" style="width: 18px; height: 18px;"></i>
+                            <span>Confirm Booking</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <p>&copy; 2026 Grand Horizon Hotel System. Powered by Flask, psycopg2 & PostgreSQL.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Lucide icons package script for rendering beautiful icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize Lucide icons on page load
+        lucide.createIcons();
+    </script>
+</body>
+</html>
