@@ -203,6 +203,226 @@
                 </div>
             </section>
 
+            <!-- Room Control Center (CRUD Table) -->
+            <section class="table-card" style="margin-top: 3rem;" id="crud-section">
+                <div class="table-header">
+                    <h2>Live Database Console (Query, Update & Delete)</h2>
+                    <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;">
+                        Rooms Count: <strong>{{ rooms|length }}</strong>
+                    </span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="custom-table" id="dashboard-crud-table">
+                        <thead>
+                            <tr>
+                                <th>Room No.</th>
+                                <th>Room Type</th>
+                                <th>Floor</th>
+                                <th>Max Guest</th>
+                                <th>Price / Night</th>
+                                <th>Status</th>
+                                <th>Guest Details</th>
+                                <th style="text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr class="room-row" id="db-row-{{ room[1] }}">
+                                <td><span class="room-number-badge">{{ room[1] }}</span></td>
+                                <td><span class="room-type-info">{{ room[2] }}</span></td>
+                                <td>Floor {{ room[6] }}</td>
+                                <td>
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-secondary);"></i>
+                                        {{ room[5] }}
+                                    </span>
+                                </td>
+                                <td><span class="price-text">${{ "%.2f"|format(room[3]|float) }}</span></td>
+                                <td>
+                                    {% set status_lower = room[4].lower() %}
+                                    {% if status_lower == 'available' %}
+                                        <span class="status-badge available">Available</span>
+                                    {% elif status_lower == 'occupied' or status_lower == 'booked' %}
+                                        <span class="status-badge occupied" style="background-color: rgba(99, 102, 241, 0.1); color: var(--accent-indigo); border-color: rgba(99, 102, 241, 0.25);">Booked</span>
+                                    {% elif status_lower == 'cleaning' %}
+                                        <span class="status-badge cleaning">Cleaning</span>
+                                    {% else %}
+                                        <span class="status-badge maintenance">Maintenance</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if room[8] %}
+                                        <div style="font-size: 0.85rem;">
+                                            <div style="font-weight: 600; color: var(--accent-cyan);">{{ room[8] }}</div>
+                                            <div style="color: var(--text-secondary); font-size: 0.75rem;">{{ room[9] }}</div>
+                                        </div>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-style: italic;">No guest</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="table-actions" style="justify-content: center;">
+                                        <button class="btn-icon edit" title="Edit and Update Room" 
+                                                onclick="editRoom('{{ room[0] }}', '{{ room[1] }}', '{{ room[2] }}', '{{ room[3]|int }}', '{{ room[4] }}', '{{ room[6] }}', '{{ room[5] }}', '{{ room[7]|join(',') if room[7] is iterable and room[7] is not string else room[7] }}', '{{ room[8] or '' }}', '{{ room[9] or '' }}')">
+                                            <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                                        </button>
+                                        <a href="/delete-room/{{ room[0] }}" class="btn-icon" title="Delete Room Record" 
+                                           onclick="return confirm('Are you sure you want to delete Room {{ room[1] }}?');" style="color: var(--status-occ-text); border-color: rgba(239, 68, 68, 0.2); background-color: rgba(239, 68, 68, 0.03); display: flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CRUD Management Forms Side-by-Side -->
+            <section class="crud-forms-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 2rem; margin-bottom: 3rem;">
+                <!-- Form 1: Add Room -->
+                <div class="actions-card" id="add-room-card" style="padding: 2rem;">
+                    <h2 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; font-size: 1.25rem;">
+                        <i data-lucide="plus-circle" style="color: var(--accent-indigo); width: 22px; height: 22px;"></i>
+                        <span>Insert New Room</span>
+                    </h2>
+                    <form method="POST" action="/add-room" class="crud-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Room Number</label>
+                                <input type="text" name="room_number" class="form-control" placeholder="103" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Room Type</label>
+                                <input type="text" name="room_type" class="form-control" placeholder="Deluxe Double" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Price per Night ($)</label>
+                                <input type="number" name="price" class="form-control" placeholder="140" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Status</label>
+                                <select name="status" class="form-control" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary);">
+                                    <option value="Available">Available</option>
+                                    <option value="Occupied">Occupied</option>
+                                    <option value="Cleaning">Cleaning</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Floor</label>
+                                <input type="number" name="floor" class="form-control" value="1" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Max Occupancy</label>
+                                <input type="number" name="max_occupancy" class="form-control" value="2" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                            <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Amenities (comma separated)</label>
+                            <input type="text" name="amenities" class="form-control" placeholder="Free Wi-Fi, King Bed, Ocean View" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem;">
+                            <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                            <span>Add Room to Inventory</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Form 2: Update Room -->
+                <div class="actions-card" id="update-room-card" style="padding: 2rem; opacity: 0.5; transition: var(--transition-smooth); pointer-events: none;">
+                    <h2 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; font-size: 1.25rem;">
+                        <i data-lucide="edit" style="color: var(--accent-cyan); width: 22px; height: 22px;"></i>
+                        <span>Update Existing Room</span>
+                    </h2>
+                    
+                    <div id="no-room-selected-msg" style="color: var(--text-secondary); text-align: center; padding: 4.5rem 1rem; font-size: 0.9rem;">
+                        <i data-lucide="mouse-pointer-click" style="width: 36px; height: 36px; color: var(--text-muted); margin-bottom: 0.5rem; display: inline-block;"></i>
+                        <p>Click the <i data-lucide="edit-3" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> icon next to a room in the table above to start editing.</p>
+                    </div>
+
+                    <form method="POST" action="/update-room/0" id="actual-update-form" class="crud-form" style="display: none;">
+                        <!-- Hidden database ID -->
+                        <input type="hidden" id="edit-room-id">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Room Number</label>
+                                <input type="text" name="room_number" id="edit-room-number" class="form-control" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Room Type</label>
+                                <input type="text" name="room_type" id="edit-room-type" class="form-control" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Price per Night ($)</label>
+                                <input type="number" name="price" id="edit-room-price" class="form-control" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Status</label>
+                                <select name="status" id="edit-room-status" class="form-control" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary);">
+                                    <option value="Available">Available</option>
+                                    <option value="Occupied">Occupied</option>
+                                    <option value="Cleaning">Cleaning</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Booked">Booked</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Floor</label>
+                                <input type="number" name="floor" id="edit-room-floor" class="form-control" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Max Occupancy</label>
+                                <input type="number" name="max_occupancy" id="edit-room-occupancy" class="form-control" required style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                            <label class="form-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-secondary);">Amenities (comma separated)</label>
+                            <input type="text" name="amenities" id="edit-room-amenities" class="form-control" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color: var(--accent-cyan);">Guest Name</label>
+                                <input type="text" name="guest_name" id="edit-guest-name" class="form-control" placeholder="Optional" style="padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight:600; color: var(--accent-cyan);">Guest Phone</label>
+                                <input type="text" name="guest_phone" id="edit-guest-phone" class="form-control" placeholder="Optional" style="padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                            <button type="button" class="btn-primary" onclick="cancelEdit()" style="flex: 1; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); box-shadow: none; justify-content: center; padding: 0.75rem;">
+                                <span>Cancel</span>
+                            </button>
+                            <button type="submit" class="btn-primary" style="flex: 2; justify-content: center; padding: 0.75rem;">
+                                <i data-lucide="check-square" style="width: 18px; height: 18px;"></i>
+                                <span>Save Changes</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
             <!-- Footer -->
             <footer class="app-footer">
                 <p>&copy; 2026 Grand Horizon Hotel System. Powered by Flask, psycopg2 & PostgreSQL.</p>
@@ -215,6 +435,46 @@
     <script>
         // Initialize Lucide icons on page load
         lucide.createIcons();
+
+        function editRoom(id, roomNo, roomType, price, status, floor, maxGuests, amenities, guestName, guestPhone) {
+            // Enable update card UI
+            const updateCard = document.getElementById('update-room-card');
+            updateCard.style.opacity = '1';
+            updateCard.style.pointerEvents = 'auto';
+            
+            // Hide placeholder and show actual form
+            document.getElementById('no-room-selected-msg').style.display = 'none';
+            const form = document.getElementById('actual-update-form');
+            form.style.display = 'block';
+            
+            // Update form action with live room ID
+            form.action = '/update-room/' + id;
+            
+            // Populate form values
+            document.getElementById('edit-room-id').value = id;
+            document.getElementById('edit-room-number').value = roomNo;
+            document.getElementById('edit-room-type').value = roomType;
+            document.getElementById('edit-room-price').value = price;
+            document.getElementById('edit-room-status').value = status;
+            document.getElementById('edit-room-floor').value = floor;
+            document.getElementById('edit-room-occupancy').value = maxGuests;
+            document.getElementById('edit-room-amenities').value = amenities;
+            document.getElementById('edit-guest-name').value = guestName;
+            document.getElementById('edit-guest-phone').value = guestPhone;
+            
+            // Scroll to the update section
+            updateCard.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function cancelEdit() {
+            // Reset update card UI
+            const updateCard = document.getElementById('update-room-card');
+            updateCard.style.opacity = '0.5';
+            updateCard.style.pointerEvents = 'none';
+            
+            document.getElementById('no-room-selected-msg').style.display = 'block';
+            document.getElementById('actual-update-form').style.display = 'none';
+        }
     </script>
 </body>
 </html>

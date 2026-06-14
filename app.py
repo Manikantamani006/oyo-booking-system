@@ -90,23 +90,36 @@ def index():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT room_number, room_type, price, status, amenities, max_occupancy, floor FROM rooms ORDER BY room_number;")
+        cur.execute("SELECT * FROM rooms ORDER BY room_number;")
         db_rooms = cur.fetchall()
+        
+        parsed_rooms = []
+        for r in db_rooms:
+            room_dict = RoomDict(r)
+            amenities = room_dict.get("amenities", "")
+            if isinstance(amenities, str):
+                room_dict["amenities"] = [a.strip() for a in amenities.split(",") if a.strip()]
+            else:
+                room_dict["amenities"] = list(amenities) if amenities else []
+            parsed_rooms.append(room_dict)
+            
         cur.close()
         conn.close()
-        if db_rooms:
-            rooms_list = db_rooms
+        if parsed_rooms:
+            rooms_list = parsed_rooms
         db_connected = True
     except Exception as e:
         # Gracefully handle database absence by falling back to mock data
         print(f"[DB Notice] Using fallback mock data. Reason: {e}")
         db_connected = False
     
+    rooms_list = [RoomDict(r) for r in rooms_list]
+    
     # Calculate key reception metrics
     stats = {
         "total_rooms": len(rooms_list),
         "available_rooms": sum(1 for r in rooms_list if r["status"].lower() == "available"),
-        "occupied_rooms": sum(1 for r in rooms_list if r["status"].lower() == "occupied"),
+        "occupied_rooms": sum(1 for r in rooms_list if (r["status"].lower() == "occupied" or r["status"].lower() == "booked")),
         "cleaning_rooms": sum(1 for r in rooms_list if r["status"].lower() == "cleaning"),
         "maintenance_rooms": sum(1 for r in rooms_list if r["status"].lower() == "maintenance"),
     }
@@ -117,7 +130,7 @@ def index():
     else:
         stats["occupancy_rate"] = 0.0
         
-    return render_template("index.html", stats=stats, db_connected=db_connected)
+    return render_template("index.html", stats=stats, db_connected=db_connected, rooms=rooms_list)
 
 @app.route("/rooms")
 def rooms():
@@ -235,6 +248,128 @@ def book_room(room_id):
             
         room = RoomDict(room)
         return render_template('book.html', room=room, db_connected=db_connected)
+
+
+@app.route("/add-room", methods=["POST"])
+def add_room():
+    room_number = request.form.get("room_number")
+    room_type = request.form.get("room_type")
+    try:
+        price = int(float(request.form.get("price", 0)))
+    except ValueError:
+        price = 0
+    status = request.form.get("status", "Available")
+    try:
+        floor = int(request.form.get("floor", 1))
+    except ValueError:
+        floor = 1
+    try:
+        max_occupancy = int(request.form.get("max_occupancy", 2))
+    except ValueError:
+        max_occupancy = 2
+    amenities = request.form.get("amenities", "")
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO rooms (room_number, room_type, price, status, floor, max_occupancy, amenities)
+            VALUES (%s, %s, %s, %s, %s, %s, %s);
+        """, (room_number, room_type, price, status, floor, max_occupancy, amenities))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"[DB Error] Failed to insert room: {e}")
+        # Fallback mock update
+        MOCK_ROOMS.append({
+            "id": len(MOCK_ROOMS) + 1,
+            "room_number": room_number,
+            "room_type": room_type,
+            "price": float(price),
+            "status": status,
+            "floor": floor,
+            "max_occupancy": max_occupancy,
+            "amenities": [a.strip() for a in amenities.split(",") if a.strip()],
+            "guest_name": None,
+            "guest_phone": None
+        })
+    return redirect(url_for("index"))
+
+
+@app.route("/update-room/<int:room_id>", methods=["POST"])
+def update_room(room_id):
+    room_number = request.form.get("room_number")
+    room_type = request.form.get("room_type")
+    try:
+        price = int(float(request.form.get("price", 0)))
+    except ValueError:
+        price = 0
+    status = request.form.get("status", "Available")
+    try:
+        floor = int(request.form.get("floor", 1))
+    except ValueError:
+        floor = 1
+    try:
+        max_occupancy = int(request.form.get("max_occupancy", 2))
+    except ValueError:
+        max_occupancy = 2
+    amenities = request.form.get("amenities", "")
+    guest_name = request.form.get("guest_name") or None
+    guest_phone = request.form.get("guest_phone") or None
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE rooms 
+            SET room_number = %s,
+                room_type = %s,
+                price = %s,
+                status = %s,
+                floor = %s,
+                max_occupancy = %s,
+                amenities = %s,
+                guest_name = %s,
+                guest_phone = %s
+            WHERE id = %s;
+        """, (room_number, room_type, price, status, floor, max_occupancy, amenities, guest_name, guest_phone, room_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"[DB Error] Failed to update room: {e}")
+        # Fallback mock update
+        for r in MOCK_ROOMS:
+            if r.get("id") == room_id:
+                r["room_number"] = room_number
+                r["room_type"] = room_type
+                r["price"] = float(price)
+                r["status"] = status
+                r["floor"] = floor
+                r["max_occupancy"] = max_occupancy
+                r["amenities"] = [a.strip() for a in amenities.split(",") if a.strip()]
+                r["guest_name"] = guest_name
+                r["guest_phone"] = guest_phone
+                break
+    return redirect(url_for("index"))
+
+
+@app.route("/delete-room/<int:room_id>", methods=["GET", "POST"])
+def delete_room(room_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM rooms WHERE id = %s;", (room_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"[DB Error] Failed to delete room: {e}")
+        # Fallback mock delete
+        global MOCK_ROOMS
+        MOCK_ROOMS = [r for r in MOCK_ROOMS if r.get("id") != room_id]
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
